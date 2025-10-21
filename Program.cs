@@ -73,6 +73,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 
+//aplicar migrations automaticamente
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
+
+
 //jwt
 builder.Services.AddAuthentication(options =>
 {
