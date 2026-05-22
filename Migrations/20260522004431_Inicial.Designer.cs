@@ -12,8 +12,8 @@ using puc.Context;
 namespace puc.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251019220747_M02")]
-    partial class M02
+    [Migration("20260522004431_Inicial")]
+    partial class Inicial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -16,7 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace puc.Controllers
 {
     [ApiController]
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
 #pragma warning disable CS1591
     public class UsuarioController : ControllerBase

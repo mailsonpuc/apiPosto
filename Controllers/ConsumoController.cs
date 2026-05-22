@@ -29,8 +29,12 @@ namespace puc.Controllers
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
+            throw new NotImplementedException();
+
+            /*
             var model = await _context.Consumos.ToListAsync();
             return Ok(model);
+            */
         }
 
 

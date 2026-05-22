@@ -1,84 +1,59 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using NSwag.AspNetCore;
+using NSwag.Generation.Processors.Security;
 using puc.Context;
 using System.Text;
 using System.Text.Json.Serialization;
+using apiPosto.Filters;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers()
-//tirar o erro de .Include(tabela => tabela.Consumos)
-.AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+// e usando exceçao global e ignorar ciclos de referencia
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add(typeof(ApiExceptionFilter));
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 
 
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApiDocument(c =>
+{
+    c.Title = "Api PucMinas";
+    c.AddSecurity("JWT", Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
+    {
+        Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
+        Name = "Authorization",
+        In = NSwag.OpenApiSecurityApiKeyLocation.Header,
+        Description = "Digite 'Bearer {token}' no cabeçalho Authorization."
+    });
+    c.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
+});
 
 
 
 //swager
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api PucMinas", Version = "v1" });
-
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Bearer JWT ",
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
-
-    //  Inclui comentários XML (Swagger mostra os <summary> dos endpoints)
-    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
-});
 
 
 
 
+var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+
+// Registra o DbContext do Entity Framework com SQL Server.
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-    if (string.IsNullOrEmpty(connectionString))
-    {
-        throw new Exception("A variável de ambiente ConnectionStrings__DefaultConnection não está definida.");
-    }
-    options.UseSqlServer(connectionString);
-});
+    options.UseSqlServer(connectionString));
 
 
-//aplicar migrations automaticamente
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-}
 
 
 
@@ -110,11 +85,11 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(opt =>
+    app.UseOpenApi();
+    app.UseSwaggerUi(settings =>
     {
-        opt.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-        opt.RoutePrefix = string.Empty; // Serve Swagger UI at the root
+        settings.Path = "/swagger";
+        settings.DocumentPath = "/swagger/v1/swagger.json";
     });
 }
 

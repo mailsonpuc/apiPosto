@@ -26,6 +26,8 @@ namespace puc.Models
         public ICollection<VeiculoUsuarios>? Veiculos { get; set; }
     }
 
+
+
     public enum Perfil
     {
         [Display(Name = "Administrador")]
